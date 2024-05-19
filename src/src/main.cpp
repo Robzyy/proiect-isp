@@ -4,20 +4,48 @@
 #include <vector>
 
 #include "comanda.hpp"
+#include "listaProduse.h"
 #include "produs.hpp"
 #include "user.hpp"
 
-void getChoice();
+void getChoice(int choice);
 
-void signIn()
+void afiseazaListaProduse()
 {
-    std::string email {}, pass {};
+    for (const auto& prod : listaProduse) {
+        prod.afiseazaDate();
+        std::cout<<"============================================================================\n";
+    }
+}
+
+void signIn(std::string email = "")
+{
+    std::string pass {};
     std::cout << "========   Conectare   ========\n";
     std::cout << "E-mail: ";
-    std::cin >> email;
+    if (email != "") {
+        std::cout << email << '\n';
+    } else {
+        std::cin >> email;
+    }
     std::cout << "Parola: ";
     std::cin >> pass;
-    // TODO: Verifica daca datele exista in "baza de date"
+    std::string e, u, p; // Email, user, pass din fisier
+    std::ifstream usersFile("users.txt");
+    bool ok = false;
+    while (usersFile >> e >> u >> p) {
+        if (email == e && pass == p) {
+            std::cout << "Ati fost autentificat.\n";
+            ok = true;
+            system("cls");
+            afiseazaListaProduse();
+        }
+    }
+    usersFile.close();
+    if (!ok) {
+        std::cout << "Eroare!\n";
+        exit(EXIT_FAILURE);
+    }
 }
 
 void createAccount()
@@ -30,27 +58,32 @@ void createAccount()
     std::cin >> user;
     std::cout << "Parola: ";
     std::cin >> pass;
-    std::fstream usersFile("users.txt");
+    std::fstream usersFile("users.txt", std::ios::app);
     std::string e, u, p; // Email, user, pass din fisier
-    std::cout << "Am creeat eup";
-    while (std::cin >> e >> u >> p) {
-        std::cout << e + ' ' + u + ' ' + p << '\n';
+    while (usersFile >> e >> u >> p) {
         if (email == e) {
             std::cout << "Acest e-mail este deja folosit!\n";
-            getChoice();
+            exit(EXIT_FAILURE);
         }
     }
+    // Failbit triggered by while loop (Trying to read at EOF)
+    // Needs clear in order for streams to work again
+    usersFile.clear();
     usersFile << email + ' ' + user + ' ' + pass + '\n';
+    usersFile.close();
+    std::cout << "\nAti fost inregistrat!\n\n";
+    signIn(email);
 }
 
-void getChoice()
+void getChoice(int choice = -1)
 {
-    int choice;
-    std::cout << "[1] Da, doresc sa ma loghez\n"
-                 "[2] Nu, doresc sa imi creez un cont acum\n"
-                 "[3] Anulare\n"
-                 "[1/2/3]: ";
-    std::cin >> choice;
+    if (choice == -1) {
+        std::cout << "[1] Da, doresc sa ma loghez\n"
+                     "[2] Nu, doresc sa imi creez un cont acum\n"
+                     "[3] Anulare\n"
+                     "[1/2/3]: ";
+        std::cin >> choice;
+    }
     switch (choice) {
     case 1:
         signIn();
